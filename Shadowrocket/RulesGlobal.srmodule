@@ -1,0 +1,17 @@
+#!name=Rules Global
+#!desc=Rules for overseas
+#!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/master/RulesGlobal.sgmodule
+
+# Rule Priority: REJECT > DIRECT > FINAL (DIRECT)
+[Rule]
+# REJECT
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Advertising/Advertising.list,REJECT
+DOMAIN-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Advertising/Advertising_Domain.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Privacy/Privacy.list,REJECT
+DOMAIN-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Privacy/Privacy_Domain.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Hijacking/Hijacking.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/ZhihuAds/ZhihuAds.list,REJECT
+RULE-SET,https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockclash.list,REJECT
+
+# Local area network
+#RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Lan/Lan.list,DIRECT
