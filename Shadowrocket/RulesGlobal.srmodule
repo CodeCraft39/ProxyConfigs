@@ -1,6 +1,6 @@
 #!name=Rules Global
 #!desc=Rules for overseas
-#!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/master/RulesGlobal.sgmodule
+#!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Shadowrocket/RulesGlobal.srmodule
 
 # Rule Priority: REJECT > DIRECT > FINAL (DIRECT)
 [Rule]

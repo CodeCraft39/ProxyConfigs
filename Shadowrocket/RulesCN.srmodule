@@ -1,6 +1,6 @@
 #!name=Rules CN
 #!desc=Rules for China
-#!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/master/RulesCN.sgmodule
+#!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Shadowrocket/RulesCN.srmodule
 
 # Rule Priority: REJECT > PROXY > DIRECT > GEOIP (CN) > FINAL (PROXY)
 [Rule]
