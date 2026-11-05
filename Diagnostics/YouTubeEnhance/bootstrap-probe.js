@@ -224,8 +224,22 @@ var YTBootstrapProbe = (() => {
     }
   }
 
+  // Script/Youtube/src/request/relay-settings.ts
+  var RELAY_SETTINGS_KEY = "YouTubeRelay.v1";
+  function relayUrl(value) {
+    if (typeof value !== "string" || value.length > 2048) throw Error("invalid-relay-url");
+    const match = /^https:\/\/([a-z0-9.-]+)\/v1\/initplayback$/i.exec(value);
+    if (!match || match[1].length > 253 || !match[1].includes(".") || match[1].split(".").some((label) => !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) throw Error("invalid-relay-url");
+    return "https://" + match[1].toLowerCase() + "/v1/initplayback";
+  }
+  function relaySettings(host) {
+    const record2 = JSON.parse(readStore(host, RELAY_SETTINGS_KEY) ?? "null");
+    if (!record2 || typeof record2.token !== "string" || !/^[A-Za-z0-9._~-]{32,256}$/.test(record2.token)) throw Error("relay-not-configured");
+    return { url: relayUrl(record2.url), token: record2.token };
+  }
+
   // tools/youtube-device/bootstrap-probe/main.ts
-  var BUILD = "bootstrap-probe-20261105.1";
+  var BUILD = "bootstrap-probe-20261105.2";
   var STORE = "YouTubeBootstrapProbe.v1";
   var TTL_MS = 10 * 60 * 1e3;
   function object(value) {
@@ -294,6 +308,7 @@ var YTBootstrapProbe = (() => {
             session: state?.session,
             emptyCompletionRequested: state?.emptyCompletionRequested,
             initialConfigReadMasked: state?.initialConfigReadMasked,
+            playbackMode: state?.playbackMode,
             failure: state?.failure
           });
         }
@@ -304,9 +319,11 @@ var YTBootstrapProbe = (() => {
     }
     let armed;
     let snapshot;
+    let selectedMode;
     try {
       const opts = options(host);
-      if ((isQX(host) ? !opts.qxEcho : host.$rocket === void 0) || opts.playbackMode !== "local" || !request || request.method?.toUpperCase() !== "POST" || platformKey(request.headers ?? {}) !== "youtube" || !/^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback\?(?:[^#]*&)?ack(?:=|&|$)/.test(request.url)) {
+      const supported = isQX(host) ? opts.playbackMode === "local" && opts.qxEcho : host.$rocket !== void 0;
+      if (!supported || !request || request.method?.toUpperCase() !== "POST" || platformKey(request.headers ?? {}) !== "youtube" || !/^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback\?(?:[^#]*&)?ack(?:=|&|$)/.test(request.url)) {
         delegate(host);
         return;
       }
@@ -315,6 +332,8 @@ var YTBootstrapProbe = (() => {
         delegate(host);
         return;
       }
+      if (opts.playbackMode === "relay") relaySettings(host);
+      selectedMode = opts.playbackMode;
       const body = bytes(isQX(host) ? request.bodyBytes ?? request.body : request.body ?? request.bodyBytes);
       if (!body?.length) {
         log("action=skip reason=body-unavailable");
@@ -334,7 +353,7 @@ var YTBootstrapProbe = (() => {
       delegate(host);
       return;
     }
-    const claimed = { ...armed, state: "claimed", session: sessionSuffix(request).trim() };
+    const claimed = { ...armed, state: "claimed", playbackMode: selectedMode, session: sessionSuffix(request).trim() };
     if (!writeState(host, claimed)) {
       log("action=skip reason=claim-write-failed");
       delegate(host);
@@ -382,8 +401,10 @@ var YTBootstrapProbe = (() => {
       crypto: host.crypto,
       CompressionStream: host.CompressionStream,
       DecompressionStream: host.DecompressionStream,
-      setTimeout: host.setTimeout ? (callback, delay) => host.setTimeout(callback, delay) : void 0,
-      clearTimeout: host.clearTimeout ? (handle) => host.clearTimeout(handle) : void 0,
+      // Preserve native functions. Production detaches them deliberately because
+      // Shadowrocket timers can reject a method-call receiver.
+      setTimeout: host.setTimeout,
+      clearTimeout: host.clearTimeout,
       $prefs: prefs ? {
         valueForKey: configRead,
         setValueForKey: (value, name) => prefs.setValueForKey(value, name),
@@ -408,7 +429,7 @@ var YTBootstrapProbe = (() => {
         host.$done(result);
       }
     };
-    log("action=force-missing-key configCleared=true");
+    log(`action=force-missing-key configCleared=true mode=${selectedMode}`);
     delegate(view);
   }
   return __toCommonJS(main_exports);
