@@ -239,7 +239,7 @@ var YTBootstrapProbe = (() => {
   }
 
   // tools/youtube-device/bootstrap-probe/main.ts
-  var BUILD = "bootstrap-probe-20261105.2";
+  var BUILD = "bootstrap-probe-20261105.3";
   var STORE = "YouTubeBootstrapProbe.v1";
   var TTL_MS = 10 * 60 * 1e3;
   function object(value) {
@@ -322,7 +322,7 @@ var YTBootstrapProbe = (() => {
     let selectedMode;
     try {
       const opts = options(host);
-      const supported = isQX(host) ? opts.playbackMode === "local" && opts.qxEcho : host.$rocket !== void 0;
+      const supported = isQX(host) ? opts.qxEcho : host.$rocket !== void 0;
       if (!supported || !request || request.method?.toUpperCase() !== "POST" || platformKey(request.headers ?? {}) !== "youtube" || !/^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback\?(?:[^#]*&)?ack(?:=|&|$)/.test(request.url)) {
         delegate(host);
         return;
