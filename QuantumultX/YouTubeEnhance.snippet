@@ -19,8 +19,15 @@
 # YouTube event request headers
 ^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event(?:\?.*)?$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.request.js#playbackMode=local&blockUpload=true&blockImmersive=true&blockShorts=false&captionLang=off&debug=false
 
-# Private relay settings, handled locally by the script. Never put tokens in script URLs.
-# Open https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/__youtube_enhance/settings in Safari with Quantumult X enabled.
+# Private relay settings, handled locally by the script.
+# Relay mode requires a configured Worker URL and valid token.
+# With this proxy app and MITM enabled, open this settings page
+# in a web browser on the same device:
+# https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/__youtube_enhance/settings
+# Set the "Worker endpoint" field to:
+# https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/v1/initplayback
+# Enter a valid relay token and save before selecting relay mode.
+# Never put credentials in shared configurations or script URLs.
 ^https:\/\/youtube-enhance-relay-staging\.hermanworkstk\.workers\.dev\/__youtube_enhance\/settings(?:\?.*)?$ url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.request.js
 
 # YouTube HTTPS hosts and the owned settings origin

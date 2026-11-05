@@ -23,8 +23,15 @@ youtube.event = type=http-request,pattern=^https:\/\/youtubei\.googleapis\.com\/
 # Filter local playback responses; relay responses have already been processed.
 youtube.init.response = type=http-response,pattern=^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback\?(?:[^#]*&)?ack(?:=|&|$),requires-body=1,max-size=-1,binary-body-mode=1,engine=webview,script-path=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.response.js,argument="{"captionLang":"{{{CaptionLanguage}}}","blockUpload":"{{{HideUpload}}}","blockImmersive":"{{{HideMusicSamples}}}","blockShorts":"{{{HideShorts}}}","debug":"{{{Debug}}}","playbackMode":"{{{PlaybackMode}}}"}"
 
-# Private relay settings, handled locally by the script. Never put tokens in module arguments.
-# Open https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/__youtube_enhance/settings in Safari with Shadowrocket enabled.
+# Private relay settings, handled locally by the script.
+# Relay mode requires a configured Worker URL and valid token.
+# With this proxy app and MITM enabled, open this settings page
+# in a web browser on the same device:
+# https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/__youtube_enhance/settings
+# Set the "Worker endpoint" field to:
+# https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/v1/initplayback
+# Enter a valid relay token and save before selecting relay mode.
+# Never put credentials in shared configurations or script URLs.
 youtube.settings = type=http-request,pattern=^https:\/\/youtube-enhance-relay-staging\.hermanworkstk\.workers\.dev\/__youtube_enhance\/settings(?:\?.*)?$,requires-body=1,max-size=8192,binary-body-mode=1,engine=webview,script-path=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.request.js
 
 # YouTube HTTPS hosts and the owned settings origin
