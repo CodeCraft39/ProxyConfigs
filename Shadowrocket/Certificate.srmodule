@@ -1,0 +1,14 @@
+#!name=MITM Certificate
+#!desc=Certificate settings for HTTPS decryption.
+
+# Reuse one certificate across configurations while this module is enabled.
+# Install and fully trust the certificate in iOS before use.
+
+[MITM]
+enable=true
+
+# Paste the exported certificate password after ca-passphrase=.
+ca-passphrase=
+
+# Paste the exported certificate content after ca-p12=.
+ca-p12=

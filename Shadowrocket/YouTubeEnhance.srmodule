@@ -1,4 +1,4 @@
-#!name=YouTube Enhance
+#!name=YouTube (Music) Enhance
 #!desc=YouTube and YouTube Music enhancements with local or relay playback processing
 #!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Shadowrocket/YouTubeEnhance.srmodule
 #!arguments=PlaybackMode:local,HideUpload:true,HideMusicSamples:true,HideShorts:false,CaptionLanguage:off,Debug:false
