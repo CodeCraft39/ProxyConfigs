@@ -2,8 +2,12 @@
 #!desc=Rules for China
 #!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Shadowrocket/RulesCN.srmodule
 
-# Rule Priority: REJECT > PROXY > DIRECT > GEOIP (CN) > FINAL (PROXY)
+# Rule Priority: LAN (DIRECT) > REJECT > PROXY > DIRECT > GEOIP (CN DIRECT) > FINAL (PROXY)
 [Rule]
+# Local area network
+# Keep LAN destinations direct if the default route changes.
+RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Lan/Lan.list,DIRECT
+
 # REJECT
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Advertising/Advertising.list,REJECT
 DOMAIN-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Advertising/Advertising_Domain.list,REJECT
@@ -65,9 +69,6 @@ RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/r
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/CCB/CCB.list,DIRECT
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/CMB/CMB.list,DIRECT
 RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/ICBC/ICBC.list,DIRECT
-
-# Local area network
-#RULE-SET,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Shadowrocket/Lan/Lan.list,DIRECT
 
 # IP-based fallback
 GEOIP,CN,DIRECT
