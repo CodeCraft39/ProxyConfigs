@@ -1,0 +1,24 @@
+# YouTube Music relay playback and one-shot missing-key test
+# Temporary device test; production scripts are pinned to a verified public commit.
+# Disable overlapping YouTube Enhance rewrite resources while this is enabled.
+# Play/pause a Music track, then open the local arm URL with ?app=music.
+# https://example.com/yt-local-capture/bootstrap-probe/arm?app=music
+# Status must report app=youtubeMusic and playbackMode=relay after selection.
+# Save valid private relay settings in Quantumult X before the trial.
+
+# YouTube API responses
+^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player(?:/ad_break)?|search|reel/reel_watch_sequence|guide|account/get_setting|get_watch|log_event|config)(?:\?.*)?$ url script-response-body https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/1d3de9bfe7f188e1d1c937f6d29536e69d6863f2/Script/Youtube/youtube.response.js#playbackMode=relay&blockUpload=true&blockImmersive=true&blockShorts=false&captionLang=off&debug=true
+
+# Relay playback with the opt-in missing-key probe
+^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback\?(?:[^#]*&)?ack(?:=|&|$) url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/bootstrap-probe.js#playbackMode=relay&blockUpload=true&blockImmersive=true&blockShorts=false&captionLang=off&debug=true&qxEcho=true
+
+# YouTube event request headers
+^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event(?:\?.*)?$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/1d3de9bfe7f188e1d1c937f6d29536e69d6863f2/Script/Youtube/youtube.request.js#playbackMode=relay&blockUpload=true&blockImmersive=true&blockShorts=false&captionLang=off&debug=true
+
+# Temporary local controls; no key export
+^https:\/\/example\.com\/yt-local-capture\/bootstrap-probe\/(arm|status|cancel)(?:\?.*)?$ url script-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/bootstrap-probe.js
+
+# Private relay settings, handled locally; never put credentials in script URLs
+^https:\/\/youtube-enhance-relay-staging\.hermanworkstk\.workers\.dev\/__youtube_enhance\/settings(?:\?.*)?$ url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/1d3de9bfe7f188e1d1c937f6d29536e69d6863f2/Script/Youtube/youtube.request.js
+
+hostname = *.googlevideo.com, youtubei.googleapis.com, example.com, youtube-enhance-relay-staging.hermanworkstk.workers.dev
