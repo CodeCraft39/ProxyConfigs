@@ -1,0 +1,34 @@
+# YouTube Enhance - Relay
+# YouTube and YouTube Music enhancements with local or relay playback processing.
+# Import as a rewrite resource.
+# Enable only one YouTube Enhance mode at a time; disable overlapping YouTube rewrites.
+# Settings: hide Upload and YouTube Music Samples; keep Shorts; caption translation and debug off.
+# Keep common URL parameters consistent across all three YouTube rules.
+# blockImmersive controls the YouTube Music Samples tab.
+# captionLang: target YouTube caption language code, such as en, zh-Hans or zh-Hant.
+# Use off to disable automatic translation.
+
+# YouTube API responses
+^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player(?:/ad_break)?|search|reel/reel_watch_sequence|guide|account/get_setting|get_watch|log_event|config)(?:\?.*)?$ url script-response-body https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.response.js#playbackMode=relay&blockUpload=true&blockImmersive=true&blockShorts=false&captionLang=off&debug=false
+
+# YouTube playback requests and responses
+# Local mode fetches/filters on-device; relay mode returns the response processed by the configured relay Worker.
+# Save the Worker URL and token privately at the settings page below before selecting relay.
+^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback\?(?:[^#]*&)?ack(?:=|&|$) url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.request.js#playbackMode=relay&blockUpload=true&blockImmersive=true&blockShorts=false&captionLang=off&debug=false&qxEcho=true
+
+# YouTube event request headers
+^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event(?:\?.*)?$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.request.js#playbackMode=relay&blockUpload=true&blockImmersive=true&blockShorts=false&captionLang=off&debug=false
+
+# Private relay settings, handled locally by the script.
+# Relay mode requires a configured Worker URL and valid token.
+# With this proxy app and MITM enabled, open this settings page
+# in a web browser on the same device:
+# https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/__youtube_enhance/settings
+# Set the "Worker endpoint" field to:
+# https://youtube-enhance-relay-staging.hermanworkstk.workers.dev/v1/initplayback
+# Enter a valid relay token and save before selecting relay mode.
+# Never put credentials in shared configurations or script URLs.
+^https:\/\/youtube-enhance-relay-staging\.hermanworkstk\.workers\.dev\/__youtube_enhance\/settings(?:\?.*)?$ url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.request.js
+
+# YouTube HTTPS hosts and private relay settings host
+hostname = *.googlevideo.com, youtubei.googleapis.com, youtube-enhance-relay-staging.hermanworkstk.workers.dev

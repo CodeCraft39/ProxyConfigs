@@ -1,8 +1,8 @@
-# YouTube Enhance
+# YouTube Enhance - Local
 # YouTube and YouTube Music enhancements with local or relay playback processing.
-# Import as a rewrite resource and disable overlapping YouTube rewrites.
+# Import as a rewrite resource.
+# Enable only one YouTube Enhance mode at a time; disable overlapping YouTube rewrites.
 # Settings: hide Upload and YouTube Music Samples; keep Shorts; caption translation and debug off.
-# playbackMode=local is the default. Set all three YouTube rules to playbackMode=relay to use the configured relay Worker.
 # Keep common URL parameters consistent across all three YouTube rules.
 # blockImmersive controls the YouTube Music Samples tab.
 # captionLang: target YouTube caption language code, such as en, zh-Hans or zh-Hant.
@@ -30,5 +30,5 @@
 # Never put credentials in shared configurations or script URLs.
 ^https:\/\/youtube-enhance-relay-staging\.hermanworkstk\.workers\.dev\/__youtube_enhance\/settings(?:\?.*)?$ url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Script/Youtube/youtube.request.js
 
-# YouTube HTTPS hosts and the owned settings origin
+# YouTube HTTPS hosts and private relay settings host
 hostname = *.googlevideo.com, youtubei.googleapis.com, youtube-enhance-relay-staging.hermanworkstk.workers.dev
