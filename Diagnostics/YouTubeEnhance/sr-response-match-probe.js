@@ -1,7 +1,7 @@
 // Temporary Shadowrocket capability probe. Fixed public fixtures only.
 // Response rules mark headers without reading or replacing response bodies.
 (() => {
-  const BUILD = 'response-match-20261110.2';
+  const BUILD = 'response-match-20261110.3';
   const WORKER_BUILD = 'redirect-probe-20261110.1';
   const ORIGIN = 'https://youtube-enhance-redirect-probe.hermanworkstk.workers.dev';
   const PAGE = 'https://example.com/yt-sr-response-match-probe';
@@ -14,7 +14,7 @@
     options: 'eyJjYXB0aW9uTGFuZyI6Im9mZiJ9',
   };
   const url = $request.url || '';
-  const source = url.match(/^https:\/\/example\.com\/yt-sr-response-match-probe\/source\/(source-control|url-headers|bad-token|binary-response)$/);
+  const source = url.match(/^https:\/\/example\.com\/yt-sr-response-match-probe\/source\/(fresh|warmed)\/(source-control|url-headers|bad-token|binary-response)$/);
   const destination = url.startsWith(ORIGIN) && url.slice(ORIGIN.length).match(/^\/v1\/probe\/(control|url-headers|bad-token|binary-response)$/);
   const urlKind = source ? 'source' : destination ? 'destination' : 'other';
   let config = {};
@@ -45,35 +45,47 @@
     headers['Access-Control-Expose-Headers'] = [...new Set((String(expose).split(',').map(s => s.trim()).filter(Boolean)).concat([
       'X-Probe-Build', 'X-Probe-Case', 'X-YTE-Probe-Source', 'X-YTE-Probe-Destination',
     ]))].join(', ');
-    log('response', 'hook=' + config.hook + ' urlKind=' + urlKind + ' case=' + (source || destination)[1]);
+    log('response', 'hook=' + config.hook + ' urlKind=' + urlKind + ' case=' + (source ? source[2] : destination[1]));
     $done({headers}); return;
   }
   if (url === PAGE) {
     if (($request.method || 'GET').toUpperCase() !== 'GET') { reply(405, 'GET required'); return; }
-    const page = String.raw`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shadowrocket response matching</title>
+    const page = String.raw`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><link rel="apple-touch-icon" href="data:,"><title>Shadowrocket response matching</title>
 <style>body{font:17px system-ui;max-width:52rem;margin:2rem auto;padding:0 1rem}button{font:inherit;margin:1rem .5rem 1rem 0;padding:.5rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body>
 <h1>Shadowrocket response matching</h1><p>Client ${BUILD}; diagnostic Worker ${WORKER_BUILD}. Fixed public data only. Keep YouTube closed and Shadowrocket with MITM enabled.</p>
-<p>This installs a source response-body rule and a destination header-only rule. Their scripts only mark headers; they leave response bodies unchanged. Both controls must pass before native rewrite results are interpreted.</p>
-<button id="run">Run five checks</button><button id="save" disabled>Save report</button><pre id="out">No checks run.</pre><pre id="report"></pre>
+<p>Run each condition in a separate Shadowrocket session: close this browser completely, switch Shadowrocket off/on with logging enabled, then reopen this exact page. Keep other tabs and YouTube closed. Refresh the module and script before starting the first session.</p>
+<label>Requested condition <select id="condition"><option value="fresh">Fresh attempt: rewrite before contacting the source server</option><option value="warmed">Warmed attempt: source GET before rewrite</option></select></label>
+<p>The fresh attempt contacts the Worker control first and leaves the source control until last. The warmed attempt runs the source control first. The Tunnel log must verify actual connection creation/reuse; browser code cannot.</p>
+<label><input id="reset" type="checkbox"> I restarted Shadowrocket and reopened this page for this run.</label>
+<p>Both response hooks only mark headers; response bodies are unchanged. Each run makes at most five calls and stops at a failure. Save each report and its matching Tunnel log. One run is allowed per page load; restart before the other condition.</p>
+<button id="run">Run selected condition</button><button id="save" disabled>Save report</button><pre id="out">No checks run.</pre><pre id="report"></pre>
 <script>
 const BUILD=${JSON.stringify(BUILD)},WORKER_BUILD=${JSON.stringify(WORKER_BUILD)},ORIGIN=${JSON.stringify(ORIGIN)},FIXTURE=${JSON.stringify(FIXTURE)};
 const fixtureHeaders=name=>({'Content-Type':'application/octet-stream','Authorization':'Bearer '+FIXTURE.token,
  'X-YTE-Target':FIXTURE.target,'X-YTE-Client-Key':FIXTURE.clientKey,'X-YTE-Upstream-Headers':FIXTURE.upstream,
  'X-YTE-Options':FIXTURE.options,'X-YTE-Platform':'youtube','X-Probe-Build':WORKER_BUILD,'X-Probe-Case':name});
-let report;
+let report,started=false;
 document.getElementById('run').onclick=async function(){
- this.disabled=true;document.getElementById('save').disabled=true;
+ if(started)return;
+ const condition=document.getElementById('condition').value;
+ if(!['fresh','warmed'].includes(condition)||!document.getElementById('reset').checked){document.getElementById('out').textContent='Restart Shadowrocket, reopen this page, select a condition and confirm the reset before running.';return;}
+ started=true;this.disabled=true;document.getElementById('save').disabled=true;
+ document.getElementById('condition').disabled=true;document.getElementById('reset').disabled=true;
  report={build:BUILD,workerBuild:WORKER_BUILD,startedAt:new Date().toISOString(),results:[],assessment:'inconclusive',
+  requestedConnectionCondition:condition,resetConfirmed:true,nativeConnectionState:'requires-tunnel-log-verification',
+  fixtureDelivery:'not-established',nativeRelayAccepted:false,
   guardUrlCompatibility:'not-established',commonRulePrerequisitesPassed:false,
   scope:'Synthetic Shadowrocket response-rule selection after native request rewrite. Not YouTube, streaming, memory or shutdown validation.'};
  const out=document.getElementById('out');out.textContent='';
- const plan=['source-control','destination-control','url-headers','binary-response','bad-token'];
+ const plan=condition==='fresh'?['destination-control','url-headers','binary-response','bad-token','source-control']:
+  ['source-control','destination-control','url-headers','binary-response','bad-token'];
+ report.sourceControlBeforeRewrite=condition==='warmed';
  for(const name of plan){
   let timer;
   try{
    const controller=new AbortController();timer=setTimeout(()=>controller.abort(),15000);
    const sourceControl=name==='source-control',direct=name==='destination-control';
-   const url=direct?ORIGIN+'/v1/probe/control':'/yt-sr-response-match-probe/source/'+name;
+   const url=direct?ORIGIN+'/v1/probe/control':'/yt-sr-response-match-probe/source/'+condition+'/'+name;
    const response=await fetch(url,{method:sourceControl?'GET':'POST',credentials:'omit',redirect:'error',cache:'no-store',signal:controller.signal,
     ...(sourceControl?{}:{headers:direct?fixtureHeaders('control'):{'Content-Type':'application/octet-stream'},body:new Uint8Array(FIXTURE.body)})});
    const bytes=new Uint8Array(await response.arrayBuffer());
@@ -106,21 +118,24 @@ document.getElementById('run').onclick=async function(){
   finally{clearTimeout(timer);}
   if(!report.results[report.results.length-1].passed){out.textContent+='Stopped: save the report and matching Shadowrocket log.\n';break;}
  }
+ const rewritten=report.results.filter(row=>!['source-control','destination-control'].includes(row.case));
+ report.fixtureDelivery=rewritten.some(row=>!row.passed)?'failed':rewritten.length===3?'passed':'not-established';
  if(report.results.length===5&&report.results.every(row=>row.passed)){
-  const selections=report.results.slice(2).map(row=>row.selection);
+  const selections=rewritten.map(row=>row.selection);
   report.assessment=selections.every(s=>s==='destination')?'rewritten-url-confirmed':selections.every(s=>s==='source')?'original-url-confirmed':'mixed-selection';
-  report.guardUrlCompatibility=report.results.slice(2).every(row=>row.guardUrlCompatible)?'compatible':'incompatible';
+  report.guardUrlCompatibility=rewritten.every(row=>row.guardUrlCompatible)?'compatible':'incompatible';
   report.commonRulePrerequisitesPassed=report.assessment==='rewritten-url-confirmed'&&report.guardUrlCompatibility==='compatible';
  }
- report.finishedAt=new Date().toISOString();out.textContent+='Matching: '+report.assessment+'\nGuard URL compatibility: '+report.guardUrlCompatibility+
-  '\nCommon-rule prerequisites: '+(report.commonRulePrerequisitesPassed?'PASS':'NOT MET')+'\nProduction playback and error-completion behavior still require device validation.\n';
- document.getElementById('report').textContent=JSON.stringify(report,null,2);this.disabled=false;document.getElementById('save').disabled=false;
+ report.finishedAt=new Date().toISOString();out.textContent+='Requested condition: '+condition+' (actual connections require Tunnel log review)\nFixture delivery: '+report.fixtureDelivery+
+  '\nMatching: '+report.assessment+'\nGuard URL compatibility: '+report.guardUrlCompatibility+
+  '\nResponse-rule prerequisites for this run: '+(report.commonRulePrerequisitesPassed?'PASS':'NOT MET')+'\nNative Relay acceptance: NOT ESTABLISHED. Both conditions and matching Tunnel logs are required.\n';
+ document.getElementById('report').textContent=JSON.stringify(report,null,2);document.getElementById('save').disabled=false;
 };
-document.getElementById('save').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));a.download='yt-sr-response-match-probe.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+document.getElementById('save').onclick=()=>{if(!report)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));a.download='yt-sr-response-match-'+report.requestedConnectionCondition+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
 </script></body></html>`;
     reply(200, page, 'text/html; charset=utf-8'); return;
   }
-  if (!source || source[1] === 'source-control') { $done({}); return; }
+  if (!source || source[2] === 'source-control') { $done({}); return; }
   if (config.probeBuild !== BUILD || config.hook !== 'request' || ($request.method || '').toUpperCase() !== 'POST') {
     log('request-rejected', 'reason=method-or-configuration'); reply(409, 'Update the probe module and script'); return;
   }
@@ -129,7 +144,7 @@ document.getElementById('save').onclick=()=>{const a=document.createElement('a')
   if (!body || body.length !== FIXTURE.body.length || !body.every((n,i)=>n===FIXTURE.body[i])) {
     log('request-rejected', 'reason=fixture-body'); reply(422, 'Fixture body unavailable or mismatched'); return;
   }
-  const name = source[1];
+  const condition=source[1],name=source[2];
   const headers = {'Content-Type': 'application/octet-stream',
     Host: ORIGIN.slice(8), 'Content-Length': String(body.length),
     Authorization: 'Bearer ' + (name === 'bad-token' ? 'PUBLIC-FIXTURE-WRONG-TOKEN' : FIXTURE.token),
@@ -138,6 +153,6 @@ document.getElementById('save').onclick=()=>{const a=document.createElement('a')
     'X-YTE-Platform': 'youtube', 'X-Probe-Build': WORKER_BUILD, 'X-Probe-Case': name};
   // Match production native Relay's explicit body/Host/Content-Length handoff.
   const output = body.byteOffset===0&&body.byteLength===body.buffer.byteLength?body:new Uint8Array(body);
-  log('rewrite', 'case=' + name + ' requestBytes=' + output.length);
+  log('rewrite', 'condition=' + condition + ' case=' + name + ' requestBytes=' + output.length);
   $done({url: ORIGIN + '/v1/probe/' + name, headers, body: output});
 })();
