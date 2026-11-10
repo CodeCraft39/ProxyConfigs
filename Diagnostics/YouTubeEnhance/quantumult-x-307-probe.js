@@ -1,7 +1,7 @@
 // Disposable Quantumult X HTTP 307 probe. Fixed public fixtures only.
 // No HTTP client, preferences, production credentials or response-body access.
 (() => {
-  const BUILD = 'redirect-307-probe-20261110.1';
+  const BUILD = 'redirect-307-probe-20261110.2';
   const WORKER_BUILD = 'redirect-probe-20261110.1';
   const ORIGIN = 'https://youtube-enhance-redirect-probe.hermanworkstk.workers.dev';
   const PAGE = 'https://example.com/yt-relay-redirect-307-probe';
@@ -73,9 +73,22 @@
     // Inject at the selected Worker host, not before the cross-origin redirect.
     // Never carry cookies or arbitrary source authentication into the Worker.
     const headers = {...headersFor(name), Host: ORIGIN.slice('https://'.length)};
-    const length = Object.entries($request.headers || {}).find(([key]) => key.toLowerCase() === 'content-length')?.[1];
-    if (typeof length === 'string' && /^\d+$/.test(length)) headers['Content-Length'] = length;
-    console.log('[YT-307-PROBE] build=' + BUILD + ' stage=destination variant=' + variant + ' case=' + name + ' action=inject');
+    // The browser can resend a redirected POST using chunked transfer coding.
+    // The header hook leaves the wire body intact, so its framing must survive.
+    const entries = Object.entries($request.headers || {});
+    const lengths = entries.filter(([key]) => key.toLowerCase() === 'content-length').map(([, value]) => value);
+    const transfers = entries.filter(([key]) => key.toLowerCase() === 'transfer-encoding').map(([, value]) => value);
+    if (lengths.length > 1 || transfers.length > 1 ||
+        (transfers.length && (typeof transfers[0] !== 'string' || transfers[0].trim().toLowerCase() !== 'chunked')) ||
+        (!transfers.length && lengths.length && (typeof lengths[0] !== 'string' || !/^\d+$/.test(lengths[0])))) {
+      console.log('[YT-307-PROBE] build=' + BUILD + ' stage=destination action=reject reason=unsupported-framing');
+      $done({}); return;
+    }
+    let inputFraming = 'none';
+    if (transfers.length) { headers['Transfer-Encoding'] = 'chunked'; inputFraming = 'chunked'; }
+    else if (lengths.length) { headers['Content-Length'] = lengths[0]; inputFraming = 'length'; }
+    // Transfer-Encoding takes precedence. Never forward both framing headers.
+    console.log('[YT-307-PROBE] build=' + BUILD + ' stage=destination variant=' + variant + ' case=' + name + ' action=inject inputFraming=' + inputFraming);
     $done({url: ORIGIN + '/v1/probe/' + name, headers}); return;
   }
   if (url !== PAGE) { $done({}); return; }

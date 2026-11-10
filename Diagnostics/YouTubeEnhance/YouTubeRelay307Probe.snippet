@@ -4,7 +4,7 @@
 # No section headers: import as a rewrite resource with opt-parser=false.
 # Disable the earlier YouTube Relay Redirect Probe while using this resource.
 # Keep YouTube closed. Production YouTube rules do not overlap these routes.
-# Client redirect-307-probe-20261110.1; Worker redirect-probe-20261110.1 is unchanged.
+# Client redirect-307-probe-20261110.2; Worker redirect-probe-20261110.1 is unchanged.
 # Refresh this resource and its script, then open the page on the same device:
 # https://example.com/yt-relay-redirect-307-probe
 # Tap Run 307 checks, save its report and the matching Tunnel log, then disable.
@@ -14,15 +14,16 @@
 ^https:\/\/example\.com\/yt-relay-redirect-307-probe/run/rule/(url-only|url-headers|bad-token|binary-response)$ url 307 https://youtube-enhance-redirect-probe.hermanworkstk.workers.dev/v1/probe/$1?probe-307=rule
 
 # Script-generated HTTP 307. Wait for the request body without reading/copying it.
-^https:\/\/example\.com\/yt-relay-redirect-307-probe/run/script/(url-only|url-headers|bad-token|binary-response)$ url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/quantumult-x-307-probe.js#probeStage=redirect&probeBuild=redirect-307-probe-20261110.1
+^https:\/\/example\.com\/yt-relay-redirect-307-probe/run/script/(url-only|url-headers|bad-token|binary-response)$ url script-analyze-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/quantumult-x-307-probe.js#probeStage=redirect&probeBuild=redirect-307-probe-20261110.2
 
-# Destination-side fixture authentication/metadata; remove only the probe query.
+# Destination-side fixture authentication/metadata; preserve length/chunked framing.
+# Remove only the probe query. Destination logs report inputFraming.
 # The canary confirms this header hook before testing either redirect mechanism.
-^https:\/\/youtube-enhance-redirect-probe\.hermanworkstk\.workers\.dev/v1/probe/(control|url-only|url-headers|bad-token|binary-response)\?probe-307=(canary|rule|script)$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/quantumult-x-307-probe.js#probeStage=destination&probeBuild=redirect-307-probe-20261110.1
+^https:\/\/youtube-enhance-redirect-probe\.hermanworkstk\.workers\.dev/v1/probe/(control|url-only|url-headers|bad-token|binary-response)\?probe-307=(canary|rule|script)$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/quantumult-x-307-probe.js#probeStage=destination&probeBuild=redirect-307-probe-20261110.2
 
 # Browser-only CORS normalization for marked public fixture responses.
 # Header-only: no playback response is read, fetched or processed in JavaScript.
-^https:\/\/youtube-enhance-redirect-probe\.hermanworkstk\.workers\.dev/v1/probe/(control|url-only|url-headers|bad-token|binary-response)(?:\?probe-307=(?:canary|rule|script))?$ url script-response-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/quantumult-x-307-probe.js#probeStage=response&probeBuild=redirect-307-probe-20261110.1
+^https:\/\/youtube-enhance-redirect-probe\.hermanworkstk\.workers\.dev/v1/probe/(control|url-only|url-headers|bad-token|binary-response)(?:\?probe-307=(?:canary|rule|script))?$ url script-response-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/quantumult-x-307-probe.js#probeStage=response&probeBuild=redirect-307-probe-20261110.2
 
 # Fixed diagnostic hosts only. This probe needs no production relay credentials.
 hostname = example.com, youtube-enhance-redirect-probe.hermanworkstk.workers.dev
