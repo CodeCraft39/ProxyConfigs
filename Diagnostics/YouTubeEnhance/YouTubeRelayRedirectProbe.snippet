@@ -1,11 +1,22 @@
 #!name=YouTube Relay Redirect Probe
-#!desc=Temporary native URL/header rewrite capability check using public fixtures only
+#!desc=Temporary request-header versus request-body rewrite comparison using public fixtures only
 
 # No section headers: import this file as a rewrite resource.
 # Create the separate diagnostic Worker before running the page.
 # Open https://example.com/yt-relay-redirect-probe in a browser on the same device.
 # Disable this temporary resource after testing.
+# Client redirect-probe-20261110.3; the deployed Worker remains redirect-probe-20261110.1.
+# Refresh this resource and its script. Canary routes verify each configured hook.
 ^https:\/\/example\.com\/yt-relay-redirect-probe(?:\?.*)?$ url script-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js
-^https:\/\/example\.com\/yt-relay-redirect-probe/run/(url-only|url-headers|bad-token|binary-response)(?:\?.*)?$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js
 
-hostname = example.com
+# Same-origin Worker canaries. Only query/headers change; no cross-host routing.
+^https:\/\/youtube-enhance-redirect-probe\.[a-z0-9-]+\.workers\.dev\/v1\/probe\/control\?probe-hook=qx-header$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js#probeHook=qx-header&probeBuild=redirect-probe-20261110.3
+^https:\/\/youtube-enhance-redirect-probe\.[a-z0-9-]+\.workers\.dev\/v1\/probe\/control\?probe-hook=qx-body$ url script-request-body https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js#probeHook=qx-body&probeBuild=redirect-probe-20261110.3
+
+# Cross-host comparisons, with disjoint paths for the two hooks.
+^https:\/\/example\.com\/yt-relay-redirect-probe/run/qx-header/(url-only|url-headers|bad-token|binary-response)(?:\?.*)?$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js#probeHook=qx-header&probeBuild=redirect-probe-20261110.3
+^https:\/\/example\.com\/yt-relay-redirect-probe/run/qx-body/(url-only|url-headers|bad-token|binary-response)(?:\?.*)?$ url script-request-body https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js#probeHook=qx-body&probeBuild=redirect-probe-20261110.3
+
+# Worker MITM is needed only for the same-origin canaries. For another account,
+# add that diagnostic Worker's exact hostname too.
+hostname = example.com, youtube-enhance-redirect-probe.hermanworkstk.workers.dev
