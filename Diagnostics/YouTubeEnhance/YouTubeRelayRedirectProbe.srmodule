@@ -1,0 +1,13 @@
+#!name=YouTube Relay Redirect Probe
+#!desc=Temporary native URL/header rewrite capability check using public fixtures only
+#!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/YouTubeRelayRedirectProbe.srmodule
+
+# No YouTube rules, real credentials, cache writes or response-body hooks.
+# Create the separate diagnostic Worker before running the page.
+# Open https://example.com/yt-relay-redirect-probe in a browser on the same device.
+# Disable this temporary module after testing.
+[Script]
+youtube.redirect.probe = type=http-request,pattern=^https:\/\/example\.com\/yt-relay-redirect-probe(?:/run/(url-only|url-headers|bad-token|binary-response))?(?:\?.*)?$,requires-body=0,engine=webview,script-path=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js
+
+[MITM]
+hostname = %APPEND% example.com

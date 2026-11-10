@@ -1,0 +1,11 @@
+#!name=YouTube Relay Redirect Probe
+#!desc=Temporary native URL/header rewrite capability check using public fixtures only
+
+# No section headers: import this file as a rewrite resource.
+# Create the separate diagnostic Worker before running the page.
+# Open https://example.com/yt-relay-redirect-probe in a browser on the same device.
+# Disable this temporary resource after testing.
+^https:\/\/example\.com\/yt-relay-redirect-probe(?:\?.*)?$ url script-echo-response https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js
+^https:\/\/example\.com\/yt-relay-redirect-probe/run/(url-only|url-headers|bad-token|binary-response)(?:\?.*)?$ url script-request-header https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/relay-redirect-probe.js
+
+hostname = example.com
