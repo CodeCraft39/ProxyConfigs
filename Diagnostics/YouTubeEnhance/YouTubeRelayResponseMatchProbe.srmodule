@@ -1,0 +1,23 @@
+#!name=YouTube Relay Response Matching Probe
+#!desc=Temporary Shadowrocket response-rule matching check using fixed public fixtures
+#!openUrl=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/YouTubeRelayResponseMatchProbe.srmodule
+
+# Separate diagnostic Worker already deployed; no Worker update or credentials needed.
+# Disable other redirect probes, leave YouTube closed, and enable Shadowrocket logging.
+# Open https://example.com/yt-sr-response-match-probe on the same device.
+# Run five checks, save the report and Tunnel log, then disable this module.
+# Client response-match-20261110.2; Worker redirect-probe-20261110.1.
+[Script]
+youtube.match.page = type=http-request,pattern=^https:\/\/example\.com\/yt-sr-response-match-probe$,requires-body=0,engine=webview,script-path=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/sr-response-match-probe.js
+
+# Host-selected request engine and explicit binary completion match native Relay.
+youtube.match.request = type=http-request,pattern=^https:\/\/example\.com\/yt-sr-response-match-probe\/source\/(url-headers|bad-token|binary-response)$,requires-body=1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/sr-response-match-probe.js,argument="{"hook":"request","probeBuild":"response-match-20261110.2"}"
+
+# Source body hook mirrors Local; the script only marks headers, leaving bytes intact.
+youtube.match.source = type=http-response,pattern=^https:\/\/example\.com\/yt-sr-response-match-probe\/source\/(source-control|url-headers|bad-token|binary-response)$,requires-body=1,binary-body-mode=1,engine=webview,script-path=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/sr-response-match-probe.js,argument="{"hook":"source","probeBuild":"response-match-20261110.2"}"
+
+# Destination header-only hook mirrors Relay's Worker response guard.
+youtube.match.destination = type=http-response,pattern=^https:\/\/youtube-enhance-redirect-probe\.hermanworkstk\.workers\.dev\/v1\/probe\/(control|url-headers|bad-token|binary-response)$,requires-body=0,script-path=https://raw.githubusercontent.com/CodeCraft39/ProxyConfigs/main/Diagnostics/YouTubeEnhance/sr-response-match-probe.js,argument="{"hook":"destination","probeBuild":"response-match-20261110.2"}"
+
+[MITM]
+hostname = %APPEND% example.com, youtube-enhance-redirect-probe.hermanworkstk.workers.dev
